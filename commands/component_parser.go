@@ -9,5 +9,6 @@ func (c component) toString() string {
 }
 
 func parse(comp string) component {
-	return "gav://org.apache.httpcomponents:httpclient:4.5.9"
+	// TODO: implement component detection
+	return component(comp)
 }

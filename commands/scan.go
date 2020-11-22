@@ -65,14 +65,21 @@ func scanCmd(c *components.Context, scanner xrayScanner) error {
 }
 
 func scan(lines <-chan string, scanner xrayScanner) error {
+	printer, err := newPrinter()
+	if err != nil {
+		return err
+	}
 	for line := range lines {
 		comp := parse(line)
-		// TODO: introduce buffering somewhere to avoid hammering xray
+		// TODO: introduce buffering somewhere to avoid hammering xray, and print results as we read the stream
 		result, err := scanner([]component{comp})
 		if err != nil {
 			return err
 		}
-		printResult(*result)
+		err = printer.print(*result)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
