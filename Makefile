@@ -1,11 +1,11 @@
 GOOS = $(shell go env GOOS)
 GOARCH = amd64
 
-clean:
-	rm -f xray-scan-${GOOS}-${GOARCH}
-
 build: clean
 	go build -o "xray-scan-${GOOS}-${GOARCH}"
+
+clean:
+	rm -f xray-scan-${GOOS}-${GOARCH}
 
 all: build-linux-amd64 build-darwin-amd64
 
