@@ -1,7 +1,10 @@
 package commands
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/jfrog/jfrog-cli-core/plugins/components"
+	"os"
 )
 
 const componentFlagKey = "component"
@@ -13,7 +16,11 @@ func GetScanCommand() components.Command {
 		Aliases:     []string{"s"},
 		Flags:       getScanFlags(),
 		Action: func(c *components.Context) error {
-			return scanCmd(c)
+			client, err := newXrayClient()
+			if err != nil {
+				return err
+			}
+			return scanCmd(c, client.scan)
 		},
 	}
 }
@@ -28,28 +35,44 @@ func getScanFlags() []components.Flag {
 	}
 }
 
-type scanArgs struct {
+type scanConfiguration struct {
 	component string
-	stdin     bool
 }
 
-func scanCmd(c *components.Context) error {
-	var conf = &scanArgs{
+type xrayScanner func(comps []component) (*ComponentSummaryResult, error)
+
+func scanCmd(c *components.Context, scanner xrayScanner) error {
+	var conf = &scanConfiguration{
 		component: c.GetStringFlagValue(componentFlagKey),
 	}
+	lines := make(chan string)
 	if conf.component == "" {
-		conf.stdin = true
+		go func() {
+			stdinScanner := bufio.NewScanner(os.Stdin)
+			defer close(lines)
+			for stdinScanner.Scan() {
+				lines <- stdinScanner.Text()
+			}
+			if err := stdinScanner.Err(); err != nil {
+				panic(fmt.Sprintf("Could not read from stdin: %+v", err))
+			}
+		}()
+	} else {
+		lines <- conf.component
 	}
-	// TODO: handle parsing of stdin, might unify both single string and stdin parsing
-	comp := parse(conf.component)
-	client, err := newXrayClient()
-	if err != nil {
-		return err
+
+	return scan(lines, scanner)
+}
+
+func scan(lines <-chan string, scanner xrayScanner) error {
+	for line := range lines {
+		comp := parse(line)
+		// TODO: introduce buffering somewhere to avoid hammering xray
+		result, err := scanner([]component{comp})
+		if err != nil {
+			return err
+		}
+		printResult(*result)
 	}
-	result, err := client.scan([]component{comp})
-	if err != nil {
-		return err
-	}
-	printResult(*result)
 	return nil
 }
