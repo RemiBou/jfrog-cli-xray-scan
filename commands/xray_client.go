@@ -17,8 +17,12 @@ type xrayClient struct {
 	xrayUrl        string
 }
 
+type xrayClientInterface interface {
+	scan(comps []component) (*ComponentSummaryResult, error)
+}
+
 // TODO: probably hard to itest like this
-func newXrayClient() (*xrayClient, error) {
+func newXrayClient() (xrayClientInterface, error) {
 	confArti, err := config.GetDefaultArtifactoryConf()
 	if err != nil {
 		return nil, err
