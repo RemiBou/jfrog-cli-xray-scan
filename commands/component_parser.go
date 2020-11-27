@@ -34,18 +34,27 @@ var matchers = []matcher{
 			return match[0][1] + ":" + match[0][2]
 		},
 	},
+	//go
+	{
+		pattern: regexp.MustCompile("((?:[a-zA-Z-._,~]+\\/)+(?:[a-zA-Z-._," +
+			"~]+)) v([0-9]\\.[0-9]\\.[0-9](?:-[a-zA-Z0-9\\-\\.]*)*)"),
+		prefix: "go",
+		extractor: func(match [][]string) string {
+			return match[0][1] + ":" + match[0][2]
+		},
+	},
 }
 
 func (c component) toString() string {
 	return string(c)
 }
 
-func parse(line string) component {
+func parse(line string) (component, bool) {
 	for _, matcher := range matchers {
 		match := matcher.pattern.FindAllStringSubmatch(line, -1)
 		if len(match) > 0 {
-			return component(matcher.prefix + ":" + matcher.extractor(match))
+			return component(matcher.prefix + "://" + matcher.extractor(match)), true
 		}
 	}
-	return ""
+	return "", false
 }

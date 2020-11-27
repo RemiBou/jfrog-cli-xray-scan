@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/jfrog/jfrog-cli-core/plugins/components"
+	"io"
 	"os"
 )
 
@@ -20,7 +21,7 @@ func GetScanCommand() components.Command {
 			if err != nil {
 				return err
 			}
-			return scanCmd(c, client.scan)
+			return scanCmd(c, os.Stdin, client.scan)
 		},
 	}
 }
@@ -41,14 +42,18 @@ type scanConfiguration struct {
 
 type xrayScanner func(comps []component) (*ComponentSummaryResult, error)
 
-func scanCmd(c *components.Context, scanner xrayScanner) error {
+type cmdContext interface {
+	GetStringFlagValue(flagName string) string
+}
+
+func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 	var conf = &scanConfiguration{
 		component: c.GetStringFlagValue(componentFlagKey),
 	}
 	lines := make(chan string)
 	if conf.component == "" {
 		go func() {
-			stdinScanner := bufio.NewScanner(os.Stdin)
+			stdinScanner := bufio.NewScanner(stdin)
 			defer close(lines)
 			for stdinScanner.Scan() {
 				lines <- stdinScanner.Text()
@@ -58,7 +63,10 @@ func scanCmd(c *components.Context, scanner xrayScanner) error {
 			}
 		}()
 	} else {
-		lines <- conf.component
+		go func() {
+			defer close(lines)
+			lines <- conf.component
+		}()
 	}
 
 	return scan(lines, scanner)
@@ -70,15 +78,17 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 		return err
 	}
 	for line := range lines {
-		comp := parse(line)
+		comp, ok := parse(line)
 		// TODO: introduce buffering somewhere to avoid hammering xray, and print results as we read the stream
-		result, err := scanner([]component{comp})
-		if err != nil {
-			return err
-		}
-		err = printer.print(*result)
-		if err != nil {
-			return err
+		if ok {
+			result, err := scanner([]component{comp})
+			if err != nil {
+				return err
+			}
+			err = printer.print(*result)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
