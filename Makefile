@@ -9,6 +9,9 @@ clean:
 
 all: build-linux-amd64 build-darwin-amd64
 
+test: build
+	go test ./...
+
 build-linux-amd64:
 	@$(call echoDebug,"")
 	@GOOS="linux" GOARCH="amd64" $(MAKE) build

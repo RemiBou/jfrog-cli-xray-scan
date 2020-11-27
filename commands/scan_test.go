@@ -14,7 +14,7 @@ func Test_Mvn_Component_Flag_Scanner(t *testing.T) {
 	}
 	err := scanCmd(context, os.Stdin, fakeXrayClient.scan)
 	require.NoError(t, err)
-	require.ElementsMatch(t, []component{"gav:org.slf4j:slf4j-ext:1.7.26"}, fakeXrayClient.scanned)
+	require.ElementsMatch(t, []component{"gav://org.slf4j:slf4j-ext:1.7.26"}, fakeXrayClient.scanned)
 }
 
 func Test_Mvn_Component_Stdin_Scanner(t *testing.T) {
@@ -26,7 +26,7 @@ func Test_Mvn_Component_Stdin_Scanner(t *testing.T) {
 	}
 	err := scanCmd(context, stdin, fakeXrayClient.scan)
 	require.NoError(t, err)
-	require.ElementsMatch(t, []component{"gav:org.slf4j:slf4j-ext:1.7.26"}, fakeXrayClient.scanned)
+	require.ElementsMatch(t, []component{"gav://org.slf4j:slf4j-ext:1.7.26"}, fakeXrayClient.scanned)
 }
 
 // TODO: Get input from files
@@ -54,13 +54,13 @@ func Test_Mvn_Dependencies_Stdin_Scanner(t *testing.T) {
 	err := scan(lines, fakeXrayClient.scan)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []component{
-		"gav:org.jolokia:jolokia-core:1.6.2",
-		"gav:org.slf4j:slf4j-ext:1.7.26",
-		"gav:com.googlecode.json-simple:json-simple:1.1.1",
-		"gav:io.jaegertracing:jaeger-client:1.2.0",
-		"gav:io.jaegertracing:jaeger-thrift:1.2.0",
-		"gav:com.google.code.findbugs:jsr305:2.0.0",
-		"gav:org.apache.thrift:libthrift:0.13.0"}, fakeXrayClient.scanned)
+		"gav://org.jolokia:jolokia-core:1.6.2",
+		"gav://org.slf4j:slf4j-ext:1.7.26",
+		"gav://com.googlecode.json-simple:json-simple:1.1.1",
+		"gav://io.jaegertracing:jaeger-client:1.2.0",
+		"gav://io.jaegertracing:jaeger-thrift:1.2.0",
+		"gav://com.google.code.findbugs:jsr305:2.0.0",
+		"gav://org.apache.thrift:libthrift:0.13.0"}, fakeXrayClient.scanned)
 
 }
 

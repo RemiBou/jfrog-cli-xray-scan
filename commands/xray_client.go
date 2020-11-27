@@ -2,39 +2,21 @@ package commands
 
 import (
 	"encoding/json"
-	"github.com/jfrog/jfrog-cli-core/artifactory/utils"
-	"github.com/jfrog/jfrog-cli-core/utils/config"
 	"github.com/jfrog/jfrog-client-go/artifactory/httpclient"
 	utils2 "github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/auth"
-	"strings"
+	"github.com/jfrog/jfrog-client-go/utils/io/httputils"
 	"time"
 )
 
 type xrayClient struct {
 	client         *httpclient.ArtifactoryHttpClient
-	serviceDetails auth.ServiceDetails
+	cliHttpDetails httputils.HttpClientDetails
 	xrayUrl        string
 }
 
-type xrayClientInterface interface {
-	scan(comps []component) (*ComponentSummaryResult, error)
-}
-
 // TODO: probably hard to itest like this
-func newXrayClient() (xrayClientInterface, error) {
-	confArti, err := config.GetDefaultArtifactoryConf()
-	if err != nil {
-		return nil, err
-	}
-	servicesManager, err := utils.CreateServiceManager(confArti, false)
-	if err != nil {
-		return nil, err
-	}
-	serviceDetails := servicesManager.GetConfig().GetServiceDetails()
-	xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
-
-	return &xrayClient{client: servicesManager.Client(), xrayUrl: xrayUrl, serviceDetails: serviceDetails}, nil
+func newXrayClient(xrayUrl string, client *httpclient.ArtifactoryHttpClient, cliHttpDetails httputils.HttpClientDetails) (*xrayClient, error) {
+	return &xrayClient{client: client, xrayUrl: xrayUrl, cliHttpDetails: cliHttpDetails}, nil
 }
 
 func (x *xrayClient) scan(comps []component) (*ComponentSummaryResult, error) {
@@ -53,10 +35,9 @@ func (x *xrayClient) scan(comps []component) (*ComponentSummaryResult, error) {
 		return nil, err
 	}
 
-	details := x.serviceDetails.CreateHttpClientDetails()
 	requestFullUrl, err := utils2.BuildArtifactoryUrl(x.xrayUrl, "/api/v1/summary/component", make(map[string]string))
-	utils2.SetContentType("application/json", &details.Headers)
-	_, body, err := x.client.SendPost(requestFullUrl, data, &details)
+	utils2.SetContentType("application/json", &x.cliHttpDetails.Headers)
+	_, body, err := x.client.SendPost(requestFullUrl, data, &x.cliHttpDetails)
 	if err != nil {
 		return nil, err
 	}

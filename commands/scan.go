@@ -3,9 +3,12 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	"github.com/jfrog/jfrog-cli-core/artifactory/utils"
 	"github.com/jfrog/jfrog-cli-core/plugins/components"
+	"github.com/jfrog/jfrog-cli-core/utils/config"
 	"io"
 	"os"
+	"strings"
 )
 
 const componentFlagKey = "component"
@@ -17,7 +20,17 @@ func GetScanCommand() components.Command {
 		Aliases:     []string{"s"},
 		Flags:       getScanFlags(),
 		Action: func(c *components.Context) error {
-			client, err := newXrayClient()
+			confArti, err := config.GetDefaultArtifactoryConf()
+			if err != nil {
+				return err
+			}
+			servicesManager, err := utils.CreateServiceManager(confArti, false)
+			if err != nil {
+				return err
+			}
+			serviceDetails := servicesManager.GetConfig().GetServiceDetails()
+			xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
+			client, err := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
 			if err != nil {
 				return err
 			}
@@ -85,6 +98,7 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 			if err != nil {
 				return err
 			}
+			fmt.Printf("result: +%v", result)
 			err = printer.print(*result)
 			if err != nil {
 				return err
