@@ -1,0 +1,66 @@
+{
+  "artifacts": [
+    {
+      "general": {
+        "component_id": "golang.org/x/net:1.8.2"
+      },
+      "issues": [
+        {
+          "components": [
+            {
+              "component_id": "golang.org/x/net",
+              "fixed_versions": [
+                "[1.12]"
+              ]
+            }
+          ],
+          "created": "2019-03-26T00:00:00.353Z",
+          "cves": [
+            {
+              "cve": "CVE-2018-17846",
+              "cvss_v2": "5.0/CVSS:2.0/AV:N/AC:L/Au:N/C:N/I:N/A:P"
+            }
+          ],
+          "description": "The html package (aka x/net/html) through 2018-09-25 in Go mishandles <table><math><select><mi><select></table>, leading to an infinite loop during an html.Parse call because inSelectIM and inSelectInTableIM do not comply with a specification.",
+          "issue_type": "security",
+          "provider": "JFrog",
+          "severity": "Medium",
+          "summary": "The html package (aka x/net/html) through 2018-09-25 in Go mishandles <table><math><select><mi><select></table>, leading to an infinite loop during an html.Parse call because inSelectIM and inSelectInTableIM do not comply with a specification."
+        }
+      ],
+      "licenses": [
+        {
+          "components": [
+            "go://golang.org/x/net:1.8.2"
+          ],
+          "full_name": "Unknown license",
+          "name": "Unknown"
+        }
+      ]
+    },
+    {
+      "general": {
+        "component_id": "org.apache.thrift:libthrift:0.13.0",
+        "name": "org.apache.thrift:libthrift",
+        "pkg_type": "maven"
+      },
+      "issues": [],
+      "licenses": [
+        {
+          "components": [
+            "gav://org.apache.thrift:libthrift:0.13.0"
+          ],
+          "full_name": "The Apache Software License, Version 2.0",
+          "more_info_url": [
+            "http://www.apache.org/licenses/LICENSE-2.0",
+            "https://spdx.org/licenses/Apache-2.0.html",
+            "https://spdx.org/licenses/Apache-2.0",
+            "http://www.opensource.org/licenses/apache2.0.php",
+            "http://www.opensource.org/licenses/Apache-2.0"
+          ],
+          "name": "Apache-2.0"
+        }
+      ]
+    }
+  ]
+}

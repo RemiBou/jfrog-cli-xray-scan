@@ -14,7 +14,6 @@ type xrayClient struct {
 	xrayUrl        string
 }
 
-// TODO: probably hard to itest like this
 func newXrayClient(xrayUrl string, client *httpclient.ArtifactoryHttpClient, cliHttpDetails httputils.HttpClientDetails) (*xrayClient, error) {
 	return &xrayClient{client: client, xrayUrl: xrayUrl, cliHttpDetails: cliHttpDetails}, nil
 }
