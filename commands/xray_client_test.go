@@ -16,6 +16,7 @@ import (
 
 const testData = "testData/"
 
+//TODO: replace by itest that will use free tier instance
 func xrayMockServer(file string) *httptest.Server {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/summary/component", func(writer http.ResponseWriter, request *http.Request) {
