@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
@@ -27,6 +28,38 @@ func Test_Mvn_Component_Stdin_Scanner(t *testing.T) {
 	err := scanCmd(context, stdin, fakeXrayClient.scan)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []component{"gav://org.slf4j:slf4j-ext:1.7.26"}, fakeXrayClient.scanned)
+}
+
+func Test_Scan_UseBuffer_NoRemains(t *testing.T) {
+	context := &fakeContext{flags: map[string]string{}}
+	var input string
+	for i := 0; i < 100; i++ {
+		input += fmt.Sprintf("[INFO]    org.slf4j:slf4j-ext:jar:1.7.%d:compile -- module slf4j.ext (auto)\n", i)
+	}
+	stdin := bytes.NewBufferString(input)
+	fakeXrayClient := &fakeXrayClient{
+		resultOK: &ComponentSummaryResult{},
+	}
+	err := scanCmd(context, stdin, fakeXrayClient.scan)
+	require.NoError(t, err)
+	require.Equal(t, 2, fakeXrayClient.scanCount)
+	require.Equal(t, 100, len(fakeXrayClient.scanned))
+}
+
+func Test_Scan_UseBuffer_Remains(t *testing.T) {
+	context := &fakeContext{flags: map[string]string{}}
+	var input string
+	for i := 0; i < 101; i++ {
+		input += fmt.Sprintf("[INFO]    org.slf4j:slf4j-ext:jar:1.7.%d:compile -- module slf4j.ext (auto)\n", i)
+	}
+	stdin := bytes.NewBufferString(input)
+	fakeXrayClient := &fakeXrayClient{
+		resultOK: &ComponentSummaryResult{},
+	}
+	err := scanCmd(context, stdin, fakeXrayClient.scan)
+	require.NoError(t, err)
+	require.Equal(t, 3, fakeXrayClient.scanCount)
+	require.Equal(t, 101, len(fakeXrayClient.scanned))
 }
 
 // TODO: Get input from files
@@ -90,12 +123,14 @@ func TestOnScanError(t *testing.T) {
 }
 
 type fakeXrayClient struct {
+	scanCount int
 	scanned   []component
 	resultOK  *ComponentSummaryResult
 	resultErr error
 }
 
 func (x *fakeXrayClient) scan(comps []component) (*ComponentSummaryResult, error) {
+	x.scanCount++
 	x.scanned = append(x.scanned, comps...)
 	return x.resultOK, x.resultErr
 }

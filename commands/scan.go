@@ -12,6 +12,7 @@ import (
 )
 
 const componentFlagKey = "component"
+const scanBufferSize = 50
 
 func GetScanCommand() components.Command {
 	return components.Command{
@@ -90,20 +91,38 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 	if err != nil {
 		return err
 	}
+	buffer := make([]component, 0, scanBufferSize)
 	for line := range lines {
 		comp, ok := parse(line)
-		// TODO: introduce buffering somewhere to avoid hammering xray, and print results as we read the stream
 		if ok {
-			result, err := scanner([]component{comp})
-			if err != nil {
-				return err
-			}
-			fmt.Printf("result: +%v", result)
-			err = printer.print(*result)
+			buffer = append(buffer, comp)
+		}
+		if len(buffer) == scanBufferSize {
+			err := callScanPrintResult(scanner, buffer, printer)
+			buffer = make([]component, 0, scanBufferSize)
 			if err != nil {
 				return err
 			}
 		}
+	}
+	if len(buffer) > 0 {
+		err := callScanPrintResult(scanner, buffer, printer)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resultPrinter) error {
+	result, err := scanner(buffer)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("result: +%v", result)
+	err = printer.print(*result)
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -36,9 +36,8 @@ var matchers = []matcher{
 	},
 	//go
 	{
-		pattern: regexp.MustCompile("((?:[a-zA-Z-._,~]+\\/)+(?:[a-zA-Z-._," +
-			"~]+)) v([0-9]\\.[0-9]\\.[0-9](?:-[a-zA-Z0-9\\-\\.]*)*)"),
-		prefix: "go",
+		pattern: regexp.MustCompile("((?:[a-zA-Z-._,~]+\\/)+(?:[a-zA-Z-._,~]+)) v([0-9]\\.[0-9]\\.[0-9](?:-[a-zA-Z0-9\\-\\.]*)*)"),
+		prefix:  "go",
 		extractor: func(match [][]string) string {
 			return match[0][1] + ":" + match[0][2]
 		},
