@@ -120,7 +120,7 @@ func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resul
 		return err
 	}
 	fmt.Printf("result: +%v", result)
-	err = printer.print(*result)
+	err = printer.print(*result, os.Stdout)
 	if err != nil {
 		return err
 	}
