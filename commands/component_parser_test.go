@@ -10,20 +10,33 @@ func Test_parse(t *testing.T) {
 		wantOk bool
 	}{
 		{
-			name:   "Simple mvn pkg",
+			name:   "Mvn pkg from mvn dep list cmd",
 			line:   "com.googlecode.json-simple:json-simple:jar:1.1.1:compile",
 			want:   "gav://com.googlecode.json-simple:json-simple:1.1.1",
 			wantOk: true,
 		},
 		{
-			name:   "Mvn pkg from mvn dep list cmd",
+			name:   "Mvn pkg from mvn dep list cmd (full line)",
 			line:   "[INFO]    com.googlecode.json-simple:json-simple:jar:1.1.1:compile -- module json.simple (auto)",
 			want:   "gav://com.googlecode.json-simple:json-simple:1.1.1",
 			wantOk: true,
 		},
+		// TODO: fix parser to make those pass
+		//{
+		//	name:   "Simple mvn pkg parsed without scope",
+		//	line:   "json-simple:json-simple:1.1.1",
+		//	want:   "gav://json-simple:json-simple:1.1.1",
+		//	wantOk: true,
+		//},
+		//{
+		//	name:   "Simple mvn pkg parsed with scope",
+		//	line:   "json-simple:json-simple:1.1.1:compile",
+		//	want:   "gav://json-simple:json-simple:1.1.1",
+		//	wantOk: true,
+		//},
 		{
-			name:   "Mvn pkg not parsed",
-			line:   "json-simple:json-simple:1.1.1",
+			name:   "Too simple mvn pkg not parsed",
+			line:   "json-simple:1.1.1",
 			want:   "",
 			wantOk: false,
 		},

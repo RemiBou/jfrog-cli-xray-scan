@@ -61,6 +61,151 @@
           "name": "Apache-2.0"
         }
       ]
+    },
+    {
+      "general": {
+        "component_id": "org.codehaus.plexus:plexus-utils:3.0.16",
+        "name": "org.codehaus.plexus:plexus-utils",
+        "pkg_type": "maven"
+      },
+      "issues": [
+        {
+          "components": [
+            {
+              "component_id": "org.codehaus.plexus:plexus-utils"
+            }
+          ],
+          "created": "2017-02-21T00:00:00.126Z",
+          "description": "> `org.codehaus.plexus.util.xml.XmlWriterUtil#writeComment(XMLWriter, String, int, int, int)` does not check if the comment includes a `\"-->\"` sequence.  This means that text contained in the command string could be interpreted as XML, possibly leading to XML injection issues, depending on how this method is being called.> > -- [github.com](https://github.com/codehaus-plexus/plexus-utils/issues/3)",
+          "issue_type": "security",
+          "provider": "JFrog",
+          "severity": "Unknown",
+          "summary": "Possible XML Injection"
+        },
+        {
+          "components": [
+            {
+              "component_id": "org.codehaus.plexus:plexus-utils"
+            }
+          ],
+          "created": "2017-02-21T00:00:00.182Z",
+          "description": "> org.codehaus.plexus.util.Expand does not guard against directory traversal, but such protection is generally expected from unarchiving tools.> > -- [github.com](https://github.com/codehaus-plexus/plexus-utils/issues/4)",
+          "issue_type": "security",
+          "provider": "JFrog",
+          "severity": "Unknown",
+          "summary": "Directory traversal in org.codehaus.plexus.util.Expand"
+        },
+        {
+          "components": [
+            {
+              "component_id": "org.codehaus.plexus:plexus-utils",
+              "fixed_versions": [
+                "[3.0.24]"
+              ]
+            }
+          ],
+          "created": "2019-05-02T00:00:00.455Z",
+          "cves": [
+            {
+              "cvss_v2": "5.0/CVSS:2.0/AV:N/AC:L/Au:N/C:N/I:P/A:N"
+            }
+          ],
+          "description": "Apache Maven contains a flaw in org.apache.maven.shared.utils.Expand that allows traversing outside of a restricted path. The issue is due to the extractFile() function in Expand.java not properly sanitizing user input, specifically path traversal style attacks (e.g. '../'). With a specially crafted request, a remote attacker can write arbitrary files.",
+          "issue_type": "security",
+          "provider": "JFrog",
+          "severity": "Medium",
+          "summary": "Apache Maven org.apache.maven.shared.utils.Expand Expand.java extractFile() Function Traversal Remote File Write"
+        },
+        {
+          "components": [
+            {
+              "component_id": "org.codehaus.plexus:plexus-utils",
+              "fixed_versions": [
+                "[3.0.24]"
+              ]
+            }
+          ],
+          "created": "2019-09-15T00:00:00.134Z",
+          "cves": [
+            {
+              "cvss_v2": "9.3/CVSS:2.0/AV:N/AC:M/Au:N/C:C/I:C/A:C"
+            }
+          ],
+          "description": "Plexus-utils contains a flaw in the XmlWriterUtil::writeComment() function in util/xml/XmlWriterUtil.java that is triggered as comment strings are not properly sanitized. This may allow a context-dependent attacker to inject unexpected content through XML code and have an unspecified impact.",
+          "issue_type": "security",
+          "provider": "JFrog",
+          "severity": "High",
+          "summary": "Plexus-utils util/xml/XmlWriterUtil.java XmlWriterUtil::writeComment() Function Comment String Escape XML Injection Unspecified Issue"
+        }
+      ],
+      "licenses": [
+        {
+          "components": [
+            "gav://org.codehaus.plexus:plexus-utils:3.0.16"
+          ],
+          "full_name": "The Apache Software License, Version 2.0",
+          "more_info_url": [
+            "http://www.apache.org/licenses/LICENSE-2.0",
+            "https://spdx.org/licenses/Apache-2.0.html",
+            "https://spdx.org/licenses/Apache-2.0",
+            "http://www.opensource.org/licenses/apache2.0.php",
+            "http://www.opensource.org/licenses/Apache-2.0"
+          ],
+          "name": "Apache-2.0"
+        }
+      ]
+    },
+    {
+      "general": {
+        "component_id": "org.flywaydb:flyway-core:4.1.1",
+        "name": "org.flywaydb:flyway-core",
+        "pkg_type": "maven"
+      },
+      "issues": [
+        {
+          "components": [
+            {
+              "component_id": "com.googlecode.flyway:flyway-core",
+              "fixed_versions": [
+                "[5.0.0]"
+              ]
+            },
+            {
+              "component_id": "org.flywaydb:flyway-core",
+              "fixed_versions": [
+                "[5.0.0]"
+              ]
+            }
+          ],
+          "created": "2020-10-25T00:00:00.982Z",
+          "cves": [
+            {
+              "cvss_v2": "2.1/AV:L/AC:L/Au:N/C:P/I:N/A:N"
+            }
+          ],
+          "description": "Flyway contains a flaw that is triggered as sensitive information is insecurely logged at the INFO level on startup. This may allow a local attacker to disclose password information.",
+          "issue_type": "security",
+          "provider": "JFrog",
+          "severity": "Low",
+          "summary": "Flyway Insecure Logging Local Password Disclosure"
+        }
+      ],
+      "licenses": [
+        {
+          "components": [
+            "gav://org.flywaydb:flyway-core:4.1.1"
+          ],
+          "full_name": "The Apache Software License, Version 2.0",
+          "more_info_url": [
+            "http://www.apache.org/licenses/LICENSE-2.0",
+            "https://spdx.org/licenses/Apache-2.0.html",
+            "https://spdx.org/licenses/Apache-2.0",
+            "http://www.opensource.org/licenses/apache2.0.php",
+            "http://www.opensource.org/licenses/Apache-2.0"
+          ],
+          "name": "Apache-2.0"
+        }
+      ]
     }
   ]
 }

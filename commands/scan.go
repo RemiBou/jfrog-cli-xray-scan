@@ -87,13 +87,14 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 }
 
 func scan(lines <-chan string, scanner xrayScanner) error {
-	printer, err := newPrinter()
+	printer, err := newPrinter(os.Stdout)
 	if err != nil {
 		return err
 	}
 	buffer := make([]component, 0, scanBufferSize)
 	for line := range lines {
 		comp, ok := parse(line)
+		// TODO: add logs when detecting
 		if ok {
 			buffer = append(buffer, comp)
 		}
@@ -119,8 +120,7 @@ func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resul
 	if err != nil {
 		return err
 	}
-	fmt.Printf("result: +%v", result)
-	err = printer.print(*result, os.Stdout)
+	err = printer.print(*result)
 	if err != nil {
 		return err
 	}
