@@ -1,40 +1,40 @@
-# hello-frog
+# Xray CLI scan
 
 ## About this plugin
-This plugin is a template and a functioning example for a basic JFrog CLI plugin. 
-This README shows the expected structure of your plugin's README.
+This plugin provides an easy way for getting security issue and licenses about your project dependencies.
 
 ## Installation with JFrog CLI
 Installing the latest version:
 
-`$ jfrog plugin install hello-frog`
+`$ jfrog plugin install xray-scan`
 
 Installing a specific version:
 
-`$ jfrog plugin install hello-frog@version`
+`$ jfrog plugin install xray-scan@version`
 
 Uninstalling a plugin
 
-`$ jfrog plugin uninstall hello-frog`
+`$ jfrog plugin uninstall xray-scan`
 
 ## Usage
 ### Commands
-* hello
-    - Arguments:
-        - addressee - The name of the person you would like to greet.
-    - Flags:
-        - shout: Makes output uppercase **[Default: false]**
-        - repeat: Greets multiple times **[Default: 1]**
-    - Example:
-    ```
-  $ jfrog hello-frog hello world --shout --repeat=2
-  
-  NEW GREETING: HELLO WORLD!
-  NEW GREETING: HELLO WORLD!
-  ```
+There is 2 way for using xray scan :
+* Standard input : you redirect the output of "mvnw dependency:list" or "go list -m" to the scan like this
+```bash
+mvn dependency:list > jfrog xray scan
+go list -m > jfrog xray scan
+```
+This will display a summary of the vulnerabilities (high/medium/low) and license for all the dependencies found.
+
+* "--component" flag : you will search for vulnerabilities and license for a single component
+```bash
+jfrog xray scan --component go:golang.org/x/net:1.8.2
+```
+You need to prefix the component id with its type, [read this doc](https://www.jfrog.com/confluence/display/JFROG
+/Xray+REST+API#XrayRESTAPI-ComponentIdentifiers) for more informations.
+
 
 ### Environment variables
-* HELLO_FROG_GREET_PREFIX - Adds a prefix to every greet **[Default: New greeting: ]**
 
 ## Additional info
 None.
