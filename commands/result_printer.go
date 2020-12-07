@@ -28,7 +28,7 @@ func newPrinter(writer io.Writer) (*resultPrinter, error) {
 
 // TODO: refactor
 func (r *resultPrinter) print(result ComponentSummaryResult) error {
-	log.Debug("Printing result for %d components", len(result.Artifacts))
+	log.Debug("Printing result for ", len(result.Artifacts), " components")
 	lines := make([]resultLineSummary, 0, len(result.Artifacts))
 	for _, artifact := range result.Artifacts {
 		lineSummary := resultLineSummary{

@@ -32,15 +32,15 @@ func GetScanCommand() components.Command {
 			}
 			serviceDetails := servicesManager.GetConfig().GetServiceDetails()
 			xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
-			log.Debug("Starting Xray scan on URL %s", xrayUrl)
+			log.Debug("Starting Xray scan on URL", xrayUrl)
 			client, err := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
 			if err != nil {
-				log.Error("Error when creating Xray client %v", err)
+				log.Error("Error when creating Xray client", err)
 				return err
 			}
 			err = scanCmd(c, os.Stdin, client.scan)
 			if err != nil {
-				log.Error("Error when scanning %v", err)
+				log.Error("Error when scanning", err)
 			}
 			return err
 		},
@@ -85,7 +85,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 			}
 		}()
 	} else {
-		log.Debug("Explicit component received %s", conf.component)
+		log.Debug("Explicit component received ", conf.component)
 		go func() {
 			defer close(lines)
 			lines <- conf.component
@@ -124,7 +124,7 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 }
 
 func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resultPrinter) error {
-	log.Debug("Scanning %d components", len(buffer))
+	log.Debug("Scanning ", len(buffer), " components")
 	result, err := scanner(buffer)
 	if err != nil {
 		return err
