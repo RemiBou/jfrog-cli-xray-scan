@@ -28,7 +28,7 @@ Alpine			alpine://branch:package:version		alpine://3.7:htop:2.0.2-r0
 var matchers = []matcher{
 	//maven
 	{
-		pattern: regexp.MustCompile("([a-z0-9\\-\\.]+:[a-z0-9\\-\\.]+):[a-z]+:([a-z0-9\\-\\.]+):[a-z]+"),
+		pattern: regexp.MustCompile("([a-z0-9\\-\\.]+:[a-z0-9\\-\\.]+)(?::[a-z]+)?:([a-z0-9\\-\\.]+)(?::[a-z]+)?"),
 		prefix:  "gav",
 		extractor: func(match [][]string) string {
 			return match[0][1] + ":" + match[0][2]

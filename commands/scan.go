@@ -6,6 +6,7 @@ import (
 	"github.com/jfrog/jfrog-cli-core/artifactory/utils"
 	"github.com/jfrog/jfrog-cli-core/plugins/components"
 	"github.com/jfrog/jfrog-cli-core/utils/config"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 	"io"
 	"os"
 	"strings"
@@ -31,11 +32,17 @@ func GetScanCommand() components.Command {
 			}
 			serviceDetails := servicesManager.GetConfig().GetServiceDetails()
 			xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
+			log.Debug("Starting Xray scan on URL %s", xrayUrl)
 			client, err := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
 			if err != nil {
+				log.Error("Error when creating Xray client %v", err)
 				return err
 			}
-			return scanCmd(c, os.Stdin, client.scan)
+			err = scanCmd(c, os.Stdin, client.scan)
+			if err != nil {
+				log.Error("Error when scanning %v", err)
+			}
+			return err
 		},
 	}
 }
@@ -66,6 +73,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 	}
 	lines := make(chan string)
 	if conf.component == "" {
+		log.Debug("No explicit component, scanning stdin")
 		go func() {
 			stdinScanner := bufio.NewScanner(stdin)
 			defer close(lines)
@@ -77,6 +85,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 			}
 		}()
 	} else {
+		log.Debug("Explicit component received %s", conf.component)
 		go func() {
 			defer close(lines)
 			lines <- conf.component
@@ -94,7 +103,6 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 	buffer := make([]component, 0, scanBufferSize)
 	for line := range lines {
 		comp, ok := parse(line)
-		// TODO: add logs when detecting
 		if ok {
 			buffer = append(buffer, comp)
 		}
@@ -116,6 +124,7 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 }
 
 func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resultPrinter) error {
+	log.Debug("Scanning %d components", len(buffer))
 	result, err := scanner(buffer)
 	if err != nil {
 		return err
