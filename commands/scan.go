@@ -33,7 +33,11 @@ func GetScanCommand() components.Command {
 			serviceDetails := servicesManager.GetConfig().GetServiceDetails()
 			xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
 			client := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
-			return scanCmd(c, os.Stdin, client.scan)
+			err = scanCmd(c, os.Stdin, client.scan)
+			if err != nil {
+				log.Error("Error when scanning", err)
+			}
+			return err
 		},
 	}
 }
@@ -65,6 +69,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 	}
 	lines := make(chan string)
 	if conf.component == "" {
+		log.Debug("No explicit component, scanning stdin")
 		go func() {
 			stdinScanner := bufio.NewScanner(stdin)
 			defer close(lines)
@@ -76,6 +81,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 			}
 		}()
 	} else {
+		log.Debug("Explicit component received ", conf.component)
 		go func() {
 			defer close(lines)
 			lines <- conf.component
@@ -120,6 +126,7 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 }
 
 func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resultPrinter) error {
+	log.Debug("Scanning ", len(buffer), " components")
 	result, err := scanner(buffer)
 	if err != nil {
 		return err

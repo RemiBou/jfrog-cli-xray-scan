@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/olekukonko/tablewriter"
 	"io"
 	"strings"
@@ -27,6 +28,7 @@ func newPrinter(writer io.Writer) (*resultPrinter, error) {
 
 // Consolidate scan result from Xray and prints as a table
 func (r *resultPrinter) print(result ComponentSummaryResult) error {
+	log.Debug("Printing result for ", len(result.Artifacts), " components")
 	lines := make([]resultLineSummary, 0, len(result.Artifacts))
 	for _, artifact := range result.Artifacts {
 		lineSummary := resultLineSummary{
