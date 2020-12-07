@@ -1,81 +1,105 @@
+//+build itest
+
 package commands
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
 	"github.com/jfrog/jfrog-client-go/artifactory/httpclient"
 	"github.com/jfrog/jfrog-client-go/utils/io/httputils"
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
+	"os"
 	"testing"
 )
 
-const testData = "testData/"
+// This test assume an Xray is provisioned with a valid user. For example on JFrog cloud free tier.
+// Then test should be launched with the following env vars
+// XRAY_URL = "https://myarti.jfrog.io/xray"
+// ARTI_USERNAME = "myuser"
+// ARTI_PASSWORD = "pazz"
 
-//TODO: replace by itest that will use free tier instance
-func xrayMockServer(file string) *httptest.Server {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/api/v1/summary/component", func(writer http.ResponseWriter, request *http.Request) {
-		file, err := ioutil.ReadFile(fmt.Sprintf("%v/%v", testData, file))
-		if err != nil {
-			panic(fmt.Sprintf("Cannot read test file %v", file))
-		}
-		_, _ = writer.Write(file)
-	})
+func Test_xrayClient_scan_single_component(t *testing.T) {
+	err, xray := createXrayClient(t)
+	require.NoError(t, err)
 
-	srv := httptest.NewServer(handler)
-	return srv
+	result, err := xray.scan([]component{"go://golang.org/x/net:1.8.2"})
+
+	require.NotNil(t, result)
+	assert.Equal(t, 1, len(result.Artifacts))
+	assert.True(t, contains(result, criteria{
+		id:       "golang.org/x/net:1.8.2",
+		nbIssues: 1,
+		license:  "Unknown",
+	}))
+	assert.Equal(t, result.Artifacts[0].Issues[0].Severity, "Medium")
 }
 
-func Test_xrayClient_scan(t *testing.T) {
-	tests := []struct {
-		response string
-		wantErr  bool
-		wantRes  bool
-	}{
-		{response: "one_component.json", wantRes: true, wantErr: false},
-		{response: "few_components.json", wantRes: true, wantErr: false},
-		{response: "unrecognized_response.json", wantRes: true, wantErr: false},
-		{response: "bad_response", wantRes: false, wantErr: true},
+func Test_xrayClient_scan_few_components(t *testing.T) {
+	err, xray := createXrayClient(t)
+	require.NoError(t, err)
+
+	result, err := xray.scan([]component{
+		"go://golang.org/x/net:1.8.2",
+		"gav://org.apache.thrift:libthrift:0.13.0",
+		"gav://org.codehaus.plexus:plexus-utils:3.0.16",
+		"gav://org.flywaydb:flyway-core:4.1.1",
+	})
+
+	require.NotNil(t, result)
+
+	assert.True(t, contains(result, criteria{
+		id:       "golang.org/x/net:1.8.2",
+		nbIssues: 1,
+		license:  "Unknown",
+	}))
+
+	assert.True(t, contains(result, criteria{
+		id:       "org.apache.thrift:libthrift:0.13.0",
+		nbIssues: 0,
+		license:  "Apache-2.0",
+	}))
+
+	assert.True(t, contains(result, criteria{
+		id:       "org.flywaydb:flyway-core:4.1.1",
+		nbIssues: 0,
+		license:  "Apache-2.0",
+	}))
+
+	assert.True(t, contains(result, criteria{
+		id:       "org.codehaus.plexus:plexus-utils:3.0.16",
+		nbIssues: 2,
+		license:  "Apache-2.0",
+	}))
+}
+
+type criteria struct {
+	id       string
+	nbIssues int
+	license  string
+}
+
+func contains(result *ComponentSummaryResult, crit criteria) bool {
+	for _, art := range result.Artifacts {
+		// There might be more in the future !
+		if art.General.ComponentID == crit.id &&
+			len(art.Issues) >= crit.nbIssues &&
+			art.Licenses[0].Name == crit.license {
+			return true
+		}
 	}
-	for _, tt := range tests {
-		t.Run(tt.response, func(t *testing.T) {
+	return false
+}
 
-			srv := xrayMockServer(tt.response)
-			defer srv.Close()
-
-			details := httputils.HttpClientDetails{
-				User:   "admin",
-				ApiKey: "XXX",
-			}
-			artifactoryDetails := auth.NewArtifactoryDetails()
-			client, err := httpclient.ArtifactoryClientBuilder().
-				SetServiceDetails(&artifactoryDetails).Build()
-			require.NoError(t, err)
-
-			xray, err := newXrayClient(srv.URL, client, details)
-			require.NoError(t, err)
-
-			result, err := xray.scan([]component{"does_not_matter_for_this_test"})
-
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			if tt.wantRes {
-				file, err := ioutil.ReadFile(fmt.Sprintf("%v/%v", testData, tt.response))
-				expected := &ComponentSummaryResult{}
-				err = json.Unmarshal(file, expected)
-				require.NoError(t, err)
-				assert.Equal(t, result, expected)
-			} else {
-				require.Nil(t, result)
-			}
-		})
+func createXrayClient(t *testing.T) (error, *xrayClient) {
+	details := httputils.HttpClientDetails{
+		User:   os.Getenv("ARTI_USERNAME"),
+		ApiKey: os.Getenv("ARTI_PASSWORD"),
 	}
+	artifactoryDetails := auth.NewArtifactoryDetails()
+	client, err := httpclient.ArtifactoryClientBuilder().
+		SetServiceDetails(&artifactoryDetails).Build()
+	require.NoError(t, err)
+
+	xray := newXrayClient(os.Getenv("XRAY_URL"), client, details)
+	return err, xray
 }

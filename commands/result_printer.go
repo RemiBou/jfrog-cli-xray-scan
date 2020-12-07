@@ -25,7 +25,7 @@ func newPrinter(writer io.Writer) (*resultPrinter, error) {
 	return &resultPrinter{table: table}, nil
 }
 
-// TODO: refactor
+// Consolidate scan result from Xray and prints as a table
 func (r *resultPrinter) print(result ComponentSummaryResult) error {
 	lines := make([]resultLineSummary, 0, len(result.Artifacts))
 	for _, artifact := range result.Artifacts {

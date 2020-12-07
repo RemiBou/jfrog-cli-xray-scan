@@ -10,7 +10,10 @@ clean:
 all: build-linux-amd64 build-darwin-amd64
 
 test: build
-	go test ./...
+	go test ./... -coverprofile=c.out
+
+itest: build
+	go test ./... --tags=itest -coverprofile=c.out
 
 build-linux-amd64:
 	@$(call echoDebug,"")

@@ -6,6 +6,7 @@ import (
 	"github.com/jfrog/jfrog-cli-core/artifactory/utils"
 	"github.com/jfrog/jfrog-cli-core/plugins/components"
 	"github.com/jfrog/jfrog-cli-core/utils/config"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 	"io"
 	"os"
 	"strings"
@@ -31,10 +32,7 @@ func GetScanCommand() components.Command {
 			}
 			serviceDetails := servicesManager.GetConfig().GetServiceDetails()
 			xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
-			client, err := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
-			if err != nil {
-				return err
-			}
+			client := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
 			return scanCmd(c, os.Stdin, client.scan)
 		},
 	}
@@ -60,6 +58,7 @@ type cmdContext interface {
 	GetStringFlagValue(flagName string) string
 }
 
+// Reads from stdin or from the argument and converts to a channel
 func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 	var conf = &scanConfiguration{
 		component: c.GetStringFlagValue(componentFlagKey),
@@ -82,10 +81,14 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 			lines <- conf.component
 		}()
 	}
-
 	return scan(lines, scanner)
 }
 
+// Central method where everything is orchestrated:
+// - reads lines from the channel
+// - tries to parse to an Xray component (maven, go...)
+// - once buffer size is reached or no more lines are given, sends to Xray
+// - prints back a summary result
 func scan(lines <-chan string, scanner xrayScanner) error {
 	printer, err := newPrinter(os.Stdout)
 	if err != nil {
@@ -94,11 +97,12 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 	buffer := make([]component, 0, scanBufferSize)
 	for line := range lines {
 		comp, ok := parse(line)
-		// TODO: add logs when detecting
 		if ok {
+			log.Debug("Detected component %v", comp)
 			buffer = append(buffer, comp)
 		}
 		if len(buffer) == scanBufferSize {
+			log.Debug("Component buffer is full")
 			err := callScanPrintResult(scanner, buffer, printer)
 			buffer = make([]component, 0, scanBufferSize)
 			if err != nil {

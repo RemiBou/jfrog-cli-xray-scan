@@ -9,8 +9,10 @@ import (
 	"testing"
 )
 
+const testData = "testData/"
+
 func Test_resultPrinter_print(t *testing.T) {
-	file, err := ioutil.ReadFile(fmt.Sprintf("%v/%v", testData, "few_components.json"))
+	file, err := ioutil.ReadFile(fmt.Sprintf("%v/%v", testData, "xray_response.json"))
 
 	bufferString := bytes.NewBufferString("")
 	printer, err := newPrinter(bufferString)

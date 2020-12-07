@@ -5,6 +5,8 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/httpclient"
 	utils2 "github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/io/httputils"
+	"github.com/jfrog/jfrog-client-go/utils/log"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -14,8 +16,8 @@ type xrayClient struct {
 	xrayUrl        string
 }
 
-func newXrayClient(xrayUrl string, client *httpclient.ArtifactoryHttpClient, cliHttpDetails httputils.HttpClientDetails) (*xrayClient, error) {
-	return &xrayClient{client: client, xrayUrl: xrayUrl, cliHttpDetails: cliHttpDetails}, nil
+func newXrayClient(xrayUrl string, client *httpclient.ArtifactoryHttpClient, cliHttpDetails httputils.HttpClientDetails) *xrayClient {
+	return &xrayClient{client: client, xrayUrl: xrayUrl, cliHttpDetails: cliHttpDetails}
 }
 
 func (x *xrayClient) scan(comps []component) (*ComponentSummaryResult, error) {
@@ -36,6 +38,7 @@ func (x *xrayClient) scan(comps []component) (*ComponentSummaryResult, error) {
 
 	requestFullUrl, err := utils2.BuildArtifactoryUrl(x.xrayUrl, "/api/v1/summary/component", make(map[string]string))
 	utils2.SetContentType("application/json", &x.cliHttpDetails.Headers)
+	log.Debug("Calling xray /api/v1/summary/component with components: %+v", components)
 	_, body, err := x.client.SendPost(requestFullUrl, data, &x.cliHttpDetails)
 	if err != nil {
 		return nil, err
@@ -43,7 +46,8 @@ func (x *xrayClient) scan(comps []component) (*ComponentSummaryResult, error) {
 	result := &ComponentSummaryResult{}
 	err = json.Unmarshal(body, result)
 	if err != nil {
-		return nil, err
+		log.Debug("Xray response: %+v", body)
+		return nil, errors.Wrap(err, "Failed parsing Xray response")
 	}
 	return result, nil
 }

@@ -8,6 +8,7 @@ require (
 	github.com/jfrog/jfrog-client-go v0.16.0
 	github.com/magiconair/properties v1.8.0
 	github.com/olekukonko/tablewriter v0.0.5-0.20201029120751-42e21c7531a3
+	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
 )
 
