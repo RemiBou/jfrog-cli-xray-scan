@@ -27,7 +27,7 @@ type matcher struct {
 var matchers = []matcher{
 	//maven
 	{
-		pattern: regexp.MustCompile("([a-z0-9\\-\\.]+:[a-z0-9\\-\\.]+)(?::[a-z]+)?:([a-z0-9\\-\\.]+)(?::[a-z]+)?"),
+		pattern: regexp.MustCompile("([a-z0-9\\-\\.]+:[a-z0-9\\-\\.]+)(?::[a-z]+)?:([a-zA-Z0-9\\-\\.]+)(?::[a-z]+)?"),
 		prefix:  "gav",
 		extractor: func(match [][]string) string {
 			return match[0][1] + ":" + match[0][2]

@@ -40,6 +40,12 @@ func Test_parse(t *testing.T) {
 			wantOk: false,
 		},
 		{
+			name:   "Spring RELEASE",
+			line:   "[INFO]    org.springframework:spring-aop:jar:5.2.9.RELEASE:compile -- module spring.aop [auto]",
+			want:   "gav://org.springframework:spring-aop:5.2.9.RELEASE",
+			wantOk: true,
+		},
+		{
 			name:   "Simple Go pkg",
 			line:   "golang.org/x/text v0.3.3",
 			want:   "go://golang.org/x/text:0.3.3",
