@@ -104,7 +104,7 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 	for line := range lines {
 		comp, ok := parse(line)
 		if ok {
-			log.Debug("Detected component %v", comp)
+			log.Debug("Detected component ", comp)
 			buffer = append(buffer, comp)
 		}
 		if len(buffer) == scanBufferSize {

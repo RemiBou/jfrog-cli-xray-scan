@@ -62,7 +62,6 @@ func Test_Scan_UseBuffer_Remains(t *testing.T) {
 	require.Equal(t, 101, len(fakeXrayClient.scanned))
 }
 
-// TODO: Get input from files
 func Test_Mvn_Dependencies_Stdin_Scanner(t *testing.T) {
 	lines := make(chan string)
 	go func() {

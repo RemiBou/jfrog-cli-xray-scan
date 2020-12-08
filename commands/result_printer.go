@@ -31,29 +31,8 @@ func (r *resultPrinter) print(result ComponentSummaryResult) error {
 	log.Debug("Printing result for ", len(result.Artifacts), " components")
 	lines := make([]resultLineSummary, 0, len(result.Artifacts))
 	for _, artifact := range result.Artifacts {
-		lineSummary := resultLineSummary{
-			Component:   artifact.General.ComponentID,
-			FixVersions: make(map[string]bool),
-		}
+		lineSummary := r.createLineSummary(artifact)
 		lines = append(lines, lineSummary)
-		for _, issue := range artifact.Issues {
-			switch issue.Severity {
-			case "Medium":
-				lineSummary.MediumCount++
-			case "Low":
-				lineSummary.LowCount++
-			case "High":
-				lineSummary.HighCount++
-			}
-			for _, component := range issue.Components {
-				for _, version := range component.FixedVersions {
-					lineSummary.FixVersions[version] = true
-				}
-			}
-		}
-		for _, license := range artifact.Licenses {
-			lineSummary.Licenses = append(lineSummary.Licenses, license.Name)
-		}
 		var rowColor tablewriter.Colors
 		if lineSummary.LowCount == 0 && lineSummary.MediumCount == 0 && lineSummary.HighCount == 0 {
 			rowColor = tablewriter.Colors{tablewriter.FgGreenColor}
@@ -84,10 +63,36 @@ func (r *resultPrinter) print(result ComponentSummaryResult) error {
 	return nil
 }
 
+func (r *resultPrinter) createLineSummary(artifact ComponentArtifact) resultLineSummary {
+	lineSummary := resultLineSummary{
+		Component:   artifact.General.ComponentID,
+		FixVersions: make(map[string]bool),
+	}
+	for _, issue := range artifact.Issues {
+		switch issue.Severity {
+		case "Medium":
+			lineSummary.MediumCount++
+		case "Low":
+			lineSummary.LowCount++
+		case "High":
+			lineSummary.HighCount++
+		}
+		for _, component := range issue.Components {
+			for _, version := range component.FixedVersions {
+				lineSummary.FixVersions[version] = true
+			}
+		}
+	}
+	for _, license := range artifact.Licenses {
+		lineSummary.Licenses = append(lineSummary.Licenses, license.Name)
+	}
+	return lineSummary
+}
+
 func versions(versions map[string]bool) string {
 	var s []string
-	for key, _ := range versions {
+	for key := range versions {
 		s = append(s, key)
 	}
-	return strings.Join(s, ",")
+	return strings.Join(s, ", ")
 }
