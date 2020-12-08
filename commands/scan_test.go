@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"github.com/jfrog/jfrog-cli-core/utils/coreutils"
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
@@ -65,6 +66,31 @@ func Test_Scan_UseBuffer_Remains(t *testing.T) {
 	require.Equal(t, 101, len(fakeXrayClient.scanned))
 }
 
+func Test_Scan_ReturnErrorIfVuln(t *testing.T) {
+	context := &fakeContext{flags: map[string]string{}}
+	var input string
+	for i := 0; i < 101; i++ {
+		input += fmt.Sprintf("[INFO]    org.slf4j:slf4j-ext:jar:1.7.%d:compile -- module slf4j.ext (auto)\n", i)
+	}
+	stdin := bytes.NewBufferString(input)
+	fakeXrayClient := &fakeXrayClient{
+		resultOK: &ComponentSummaryResult{
+			Artifacts: []ComponentArtifact{
+				{
+					Issues: []ComponentArtifactIssue{
+						{},
+					},
+				},
+			},
+		},
+	}
+	err := scanCmd(context, stdin, fakeXrayClient.scan)
+	require.Error(t, err)
+	cliErr, ok := err.(coreutils.CliError)
+	require.True(t, ok)
+	require.Error(t, cliErr)
+}
+
 func Test_Mvn_Dependencies_Stdin_Scanner(t *testing.T) {
 	lines := make(chan string)
 	go func() {
@@ -114,14 +140,6 @@ func Test_Go_List_Stdin_Scanner(t *testing.T) {
 	require.ElementsMatch(t, []component{
 		"go://github.com/BurntSushi/toml:0.3.1",
 	}, fakeXrayClient.scanned)
-}
-
-func TestValidateOutput(t *testing.T) {
-
-}
-
-func TestOnScanError(t *testing.T) {
-
 }
 
 type fakeXrayClient struct {
