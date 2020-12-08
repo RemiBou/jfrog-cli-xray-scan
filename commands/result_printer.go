@@ -32,7 +32,7 @@ func (r resultLineSummary) hasIssue() bool {
 func newPrinter(writer io.Writer, config printerConfig) *resultPrinter {
 	table := tablewriter.NewWriter(writer)
 	table.SetRowLine(true)
-	table.SetHeader([]string{"Component", "High", "Medium", "Low", "Min fix version", "Licenses"})
+	table.SetHeader([]string{"Component", "High", "Medium", "Low", "Fix version(s)", "Licenses"})
 	return &resultPrinter{table: table, config: config}
 }
 
