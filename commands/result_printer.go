@@ -8,8 +8,13 @@ import (
 	"strings"
 )
 
+type printerConfig struct {
+	printNoIssues bool
+}
+
 type resultPrinter struct {
-	table *tablewriter.Table
+	config printerConfig
+	table  *tablewriter.Table
 }
 type resultLineSummary struct {
 	Component   string
@@ -20,47 +25,54 @@ type resultLineSummary struct {
 	Licenses    []string
 }
 
-func newPrinter(writer io.Writer) (*resultPrinter, error) {
+func (r resultLineSummary) hasIssue() bool {
+	return r.LowCount > 0 || r.MediumCount > 0 || r.HighCount > 0
+}
+
+func newPrinter(writer io.Writer, config printerConfig) (*resultPrinter, error) {
 	table := tablewriter.NewWriter(writer)
 	table.SetHeader([]string{"Component", "High", "Medium", "Low", "Min fix version", "Licenses"})
-	return &resultPrinter{table: table}, nil
+	return &resultPrinter{table: table, config: config}, nil
 }
 
 // Consolidate scan result from Xray and prints as a table
 func (r *resultPrinter) print(result ComponentSummaryResult) error {
 	log.Debug("Printing result for ", len(result.Artifacts), " components")
-	lines := make([]resultLineSummary, 0, len(result.Artifacts))
 	for _, artifact := range result.Artifacts {
 		lineSummary := r.createLineSummary(artifact)
-		lines = append(lines, lineSummary)
-		var rowColor tablewriter.Colors
-		if lineSummary.LowCount == 0 && lineSummary.MediumCount == 0 && lineSummary.HighCount == 0 {
-			rowColor = tablewriter.Colors{tablewriter.FgGreenColor}
-		} else if lineSummary.HighCount > 0 {
-			rowColor = tablewriter.Colors{tablewriter.FgHiRedColor}
-		} else if lineSummary.MediumCount > 0 {
-			rowColor = tablewriter.Colors{tablewriter.FgRedColor}
-		} else if lineSummary.LowCount > 0 {
-			rowColor = tablewriter.Colors{tablewriter.FgYellowColor}
+		if r.config.printNoIssues || lineSummary.hasIssue() {
+			r.renderLine(lineSummary)
 		}
-		r.table.Rich([]string{
-			lineSummary.Component, fmt.Sprintf("%d", lineSummary.HighCount),
-			fmt.Sprintf("%d", lineSummary.MediumCount),
-			fmt.Sprintf("%d", lineSummary.LowCount), versions(lineSummary.FixVersions),
-			strings.Join(lineSummary.Licenses, ",")},
-			[]tablewriter.Colors{
-				rowColor,
-				rowColor,
-				rowColor,
-				rowColor,
-				rowColor,
-				rowColor,
-			},
-		)
-
 	}
 	r.table.Render()
 	return nil
+}
+
+func (r *resultPrinter) renderLine(lineSummary resultLineSummary) {
+	var rowColor tablewriter.Colors
+	if lineSummary.LowCount == 0 && lineSummary.MediumCount == 0 && lineSummary.HighCount == 0 {
+		rowColor = tablewriter.Colors{tablewriter.FgGreenColor}
+	} else if lineSummary.HighCount > 0 {
+		rowColor = tablewriter.Colors{tablewriter.FgHiRedColor}
+	} else if lineSummary.MediumCount > 0 {
+		rowColor = tablewriter.Colors{tablewriter.FgRedColor}
+	} else if lineSummary.LowCount > 0 {
+		rowColor = tablewriter.Colors{tablewriter.FgYellowColor}
+	}
+	r.table.Rich([]string{
+		lineSummary.Component, fmt.Sprintf("%d", lineSummary.HighCount),
+		fmt.Sprintf("%d", lineSummary.MediumCount),
+		fmt.Sprintf("%d", lineSummary.LowCount), versions(lineSummary.FixVersions),
+		strings.Join(lineSummary.Licenses, ",")},
+		[]tablewriter.Colors{
+			rowColor,
+			rowColor,
+			rowColor,
+			rowColor,
+			rowColor,
+			rowColor,
+		},
+	)
 }
 
 func (r *resultPrinter) createLineSummary(artifact ComponentArtifact) resultLineSummary {

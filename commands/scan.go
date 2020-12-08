@@ -13,6 +13,7 @@ import (
 )
 
 const componentFlagKey = "component"
+const displayNoIssuesKey = "display-no-issues"
 const scanBufferSize = 50
 
 func GetScanCommand() components.Command {
@@ -49,23 +50,31 @@ func getScanFlags() []components.Flag {
 			Description:  "Display results for a specific component.",
 			DefaultValue: "",
 		},
+		components.BoolFlag{
+			Name:         displayNoIssuesKey,
+			Description:  "Display component with no issues.",
+			DefaultValue: false,
+		},
 	}
 }
 
 type scanConfiguration struct {
-	component string
+	component       string
+	displayNoIssues bool
 }
 
 type xrayScanner func(comps []component) (*ComponentSummaryResult, error)
 
 type cmdContext interface {
 	GetStringFlagValue(flagName string) string
+	GetBoolFlagValue(flagName string) bool
 }
 
 // Reads from stdin or from the argument and converts to a channel
 func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
-	var conf = &scanConfiguration{
-		component: c.GetStringFlagValue(componentFlagKey),
+	var conf = scanConfiguration{
+		component:       c.GetStringFlagValue(componentFlagKey),
+		displayNoIssues: c.GetBoolFlagValue(displayNoIssuesKey),
 	}
 	lines := make(chan string)
 	if conf.component == "" {
@@ -87,7 +96,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 			lines <- conf.component
 		}()
 	}
-	return scan(lines, scanner)
+	return scan(lines, scanner, conf)
 }
 
 // Central method where everything is orchestrated:
@@ -95,8 +104,8 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 // - tries to parse to an Xray component (maven, go...)
 // - once buffer size is reached or no more lines are given, sends to Xray
 // - prints back a summary result
-func scan(lines <-chan string, scanner xrayScanner) error {
-	printer, err := newPrinter(os.Stdout)
+func scan(lines <-chan string, scanner xrayScanner, conf scanConfiguration) error {
+	printer, err := newPrinter(os.Stdout, printerConfig{printNoIssues: conf.displayNoIssues})
 	if err != nil {
 		return err
 	}

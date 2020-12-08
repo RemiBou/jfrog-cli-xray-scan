@@ -9,7 +9,10 @@ import (
 )
 
 func Test_Mvn_Component_Flag_Scanner(t *testing.T) {
-	context := &fakeContext{flags: map[string]string{componentFlagKey: "org.slf4j:slf4j-ext:jar:1.7.26:compile"}}
+	context := &fakeContext{flags: map[string]interface{}{
+		componentFlagKey:   "org.slf4j:slf4j-ext:jar:1.7.26:compile",
+		displayNoIssuesKey: false},
+	}
 	fakeXrayClient := &fakeXrayClient{
 		resultOK: &ComponentSummaryResult{},
 	}
@@ -19,7 +22,7 @@ func Test_Mvn_Component_Flag_Scanner(t *testing.T) {
 }
 
 func Test_Mvn_Component_Stdin_Scanner(t *testing.T) {
-	context := &fakeContext{flags: map[string]string{}}
+	context := &fakeContext{flags: map[string]interface{}{}}
 	stdin := bytes.NewBufferString(
 		"[INFO]    org.slf4j:slf4j-ext:jar:1.7.26:compile -- module slf4j.ext (auto)")
 	fakeXrayClient := &fakeXrayClient{
@@ -31,7 +34,7 @@ func Test_Mvn_Component_Stdin_Scanner(t *testing.T) {
 }
 
 func Test_Scan_UseBuffer_NoRemains(t *testing.T) {
-	context := &fakeContext{flags: map[string]string{}}
+	context := &fakeContext{flags: map[string]interface{}{}}
 	var input string
 	for i := 0; i < 100; i++ {
 		input += fmt.Sprintf("[INFO]    org.slf4j:slf4j-ext:jar:1.7.%d:compile -- module slf4j.ext (auto)\n", i)
@@ -47,7 +50,7 @@ func Test_Scan_UseBuffer_NoRemains(t *testing.T) {
 }
 
 func Test_Scan_UseBuffer_Remains(t *testing.T) {
-	context := &fakeContext{flags: map[string]string{}}
+	context := &fakeContext{flags: map[string]interface{}{}}
 	var input string
 	for i := 0; i < 101; i++ {
 		input += fmt.Sprintf("[INFO]    org.slf4j:slf4j-ext:jar:1.7.%d:compile -- module slf4j.ext (auto)\n", i)
@@ -83,7 +86,7 @@ func Test_Mvn_Dependencies_Stdin_Scanner(t *testing.T) {
 	fakeXrayClient := &fakeXrayClient{
 		resultOK: &ComponentSummaryResult{},
 	}
-	err := scan(lines, fakeXrayClient.scan)
+	err := scan(lines, fakeXrayClient.scan, scanConfiguration{})
 	require.NoError(t, err)
 	require.ElementsMatch(t, []component{
 		"gav://org.jolokia:jolokia-core:1.6.2",
@@ -106,7 +109,7 @@ func Test_Go_List_Stdin_Scanner(t *testing.T) {
 	fakeXrayClient := &fakeXrayClient{
 		resultOK: &ComponentSummaryResult{},
 	}
-	err := scan(lines, fakeXrayClient.scan)
+	err := scan(lines, fakeXrayClient.scan, scanConfiguration{})
 	require.NoError(t, err)
 	require.ElementsMatch(t, []component{
 		"go://github.com/BurntSushi/toml:0.3.1",
@@ -135,9 +138,19 @@ func (x *fakeXrayClient) scan(comps []component) (*ComponentSummaryResult, error
 }
 
 type fakeContext struct {
-	flags map[string]string
+	flags map[string]interface{}
 }
 
 func (f *fakeContext) GetStringFlagValue(flagName string) string {
-	return f.flags[flagName]
+	if val, ok := f.flags[flagName].(string); ok {
+		return val
+	}
+	return ""
+}
+
+func (f *fakeContext) GetBoolFlagValue(flagName string) bool {
+	if val, ok := f.flags[flagName].(bool); ok {
+		return val
+	}
+	return false
 }
