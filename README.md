@@ -28,10 +28,8 @@ This will display a summary of the vulnerabilities (high/medium/low) and license
 
 * "--component" flag : you will search for vulnerabilities and license for a single component
 ```bash
-jfrog xray scan --component go:golang.org/x/net:1.8.2
+jfrog xray-scan scan --component "golang.org/x/net v1.8.2"
 ```
-You need to prefix the component id with its type, [read this doc](https://www.jfrog.com/confluence/display/JFROG
-/Xray+REST+API#XrayRESTAPI-ComponentIdentifiers) for more informations.
 
 
 ### Environment variables
