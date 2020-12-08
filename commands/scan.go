@@ -105,10 +105,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 // - once buffer size is reached or no more lines are given, sends to Xray
 // - prints back a summary result
 func scan(lines <-chan string, scanner xrayScanner, conf scanConfiguration) error {
-	printer, err := newPrinter(os.Stdout, printerConfig{printNoIssues: conf.displayNoIssues})
-	if err != nil {
-		return err
-	}
+	printer := newPrinter(os.Stdout, printerConfig{printNoIssues: conf.displayNoIssues})
 	buffer := make([]component, 0, scanBufferSize)
 	for line := range lines {
 		comp, ok := parse(line)
@@ -131,6 +128,7 @@ func scan(lines <-chan string, scanner xrayScanner, conf scanConfiguration) erro
 			return err
 		}
 	}
+	printer.flush()
 	return nil
 }
 
@@ -140,9 +138,6 @@ func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resul
 	if err != nil {
 		return err
 	}
-	err = printer.print(*result)
-	if err != nil {
-		return err
-	}
+	printer.print(*result)
 	return nil
 }
