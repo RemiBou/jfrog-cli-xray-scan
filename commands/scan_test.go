@@ -67,7 +67,7 @@ func Test_Scan_UseBuffer_Remains(t *testing.T) {
 }
 
 func Test_Scan_ReturnErrorIfVuln(t *testing.T) {
-	context := &fakeContext{flags: map[string]string{}}
+	context := &fakeContext{flags: map[string]interface{}{failKey: true}}
 	var input string
 	for i := 0; i < 101; i++ {
 		input += fmt.Sprintf("[INFO]    org.slf4j:slf4j-ext:jar:1.7.%d:compile -- module slf4j.ext (auto)\n", i)

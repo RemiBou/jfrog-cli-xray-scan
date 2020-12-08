@@ -12,7 +12,7 @@ import (
 
 // Smoke test that requires a proper jfrog cli config where it's executed
 func Test_Main(t *testing.T) {
-	os.Args = []string{"cmd", "s", "-component", "golang.org/x/net v1.8.2"}
+	os.Args = []string{"cmd", "s", "--component=golang.org/x/net v1.8.2", "--fail=false"}
 
 	stdout := captureStdout(func() {
 		plugins.PluginMain(getApp())
@@ -28,7 +28,7 @@ func captureStdout(something func()) string {
 
 	something()
 
-	w.Close()
+	_ = w.Close()
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = rescueStdout
 	return string(out)

@@ -15,6 +15,7 @@ import (
 
 const componentFlagKey = "component"
 const displayNoIssuesKey = "display-no-issues"
+const failKey = "fail"
 const scanBufferSize = 50
 
 func GetScanCommand() components.Command {
@@ -48,6 +49,11 @@ func getScanFlags() []components.Flag {
 			DefaultValue: "",
 		},
 		components.BoolFlag{
+			Name:         failKey,
+			Description:  "Return non zero exit code if at least one issue is found",
+			DefaultValue: true,
+		},
+		components.BoolFlag{
 			Name:         displayNoIssuesKey,
 			Description:  "Display component with no issues.",
 			DefaultValue: false,
@@ -58,6 +64,7 @@ func getScanFlags() []components.Flag {
 type scanConfiguration struct {
 	component       string
 	displayNoIssues bool
+	fail            bool
 }
 
 type xrayScanner func(comps []component) (*ComponentSummaryResult, error)
@@ -72,6 +79,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 	var conf = scanConfiguration{
 		component:       c.GetStringFlagValue(componentFlagKey),
 		displayNoIssues: c.GetBoolFlagValue(displayNoIssuesKey),
+		fail:            c.GetBoolFlagValue(failKey),
 	}
 	lines := make(chan string)
 	if conf.component == "" {
@@ -103,6 +111,7 @@ func scanCmd(c cmdContext, stdin io.Reader, scanner xrayScanner) error {
 // - prints back a summary result
 func scan(lines <-chan string, scanner xrayScanner, conf scanConfiguration) error {
 	printer := newPrinter(os.Stdout, printerConfig{printNoIssues: conf.displayNoIssues})
+	var err error
 	var result error
 	var any bool
 	buffer := make([]component, 0, scanBufferSize)
@@ -129,7 +138,7 @@ func scan(lines <-chan string, scanner xrayScanner, conf scanConfiguration) erro
 		}
 	}
 	printer.flush()
-	if any {
+	if any && conf.fail {
 		result = coreutils.CliError{
 			ExitCode: coreutils.ExitCodeVulnerableBuild,
 			ErrorMsg: "Xray vulnerabilities found",
