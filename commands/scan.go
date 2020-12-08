@@ -6,6 +6,7 @@ import (
 	"github.com/jfrog/jfrog-cli-core/artifactory/utils"
 	"github.com/jfrog/jfrog-cli-core/plugins/components"
 	"github.com/jfrog/jfrog-cli-core/utils/config"
+	"github.com/jfrog/jfrog-cli-core/utils/coreutils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 	"io"
 	"os"
@@ -33,11 +34,7 @@ func GetScanCommand() components.Command {
 			serviceDetails := servicesManager.GetConfig().GetServiceDetails()
 			xrayUrl := strings.Replace(serviceDetails.GetUrl(), "/artifactory", "/xray", 1)
 			client := newXrayClient(xrayUrl, servicesManager.Client(), serviceDetails.CreateHttpClientDetails())
-			err = scanCmd(c, os.Stdin, client.scan)
-			if err != nil {
-				log.Error("Error when scanning", err)
-			}
-			return err
+			return scanCmd(c, os.Stdin, client.scan)
 		},
 	}
 }
@@ -100,6 +97,8 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 	if err != nil {
 		return err
 	}
+	var result error
+	var any bool
 	buffer := make([]component, 0, scanBufferSize)
 	for line := range lines {
 		comp, ok := parse(line)
@@ -109,7 +108,8 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 		}
 		if len(buffer) == scanBufferSize {
 			log.Debug("Component buffer is full")
-			err := callScanPrintResult(scanner, buffer, printer)
+			any, err = callScanPrintResult(scanner, buffer, printer)
+
 			buffer = make([]component, 0, scanBufferSize)
 			if err != nil {
 				return err
@@ -117,23 +117,34 @@ func scan(lines <-chan string, scanner xrayScanner) error {
 		}
 	}
 	if len(buffer) > 0 {
-		err := callScanPrintResult(scanner, buffer, printer)
+		any, err = callScanPrintResult(scanner, buffer, printer)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+	if any {
+		result = coreutils.CliError{
+			ExitCode: coreutils.ExitCodeVulnerableBuild,
+			ErrorMsg: "Xray vulnerabilities found",
+		}
+	}
+	return result
 }
 
-func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resultPrinter) error {
+func callScanPrintResult(scanner xrayScanner, buffer []component, printer *resultPrinter) (bool, error) {
 	log.Debug("Scanning ", len(buffer), " components")
 	result, err := scanner(buffer)
 	if err != nil {
-		return err
+		return false, err
 	}
 	err = printer.print(*result)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	for _, r := range result.Artifacts {
+		if len(r.Issues) > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
 }

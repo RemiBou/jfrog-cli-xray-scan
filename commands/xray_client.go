@@ -64,21 +64,7 @@ type ComponentArtifact struct {
 		Name        string `json:"name"`
 		PkgType     string `json:"pkg_type"`
 	} `json:"general"`
-	Issues []struct {
-		Components []struct {
-			ComponentID   string   `json:"component_id"`
-			FixedVersions []string `json:"fixed_versions"`
-		} `json:"components"`
-		Created time.Time `json:"created"`
-		Cves    []struct {
-			CvssV2 string `json:"cvss_v2"`
-		} `json:"cves"`
-		Description string `json:"description"`
-		IssueType   string `json:"issue_type"`
-		Provider    string `json:"provider"`
-		Severity    string `json:"severity"`
-		Summary     string `json:"summary"`
-	} `json:"issues"`
+	Issues   []ComponentArtifactIssue `json:"issues"`
 	Licenses []struct {
 		Components  []string `json:"components"`
 		FullName    string   `json:"full_name"`
@@ -86,7 +72,21 @@ type ComponentArtifact struct {
 		Name        string   `json:"name"`
 	} `json:"licenses"`
 }
-
+type ComponentArtifactIssue struct {
+	Components []struct {
+		ComponentID   string   `json:"component_id"`
+		FixedVersions []string `json:"fixed_versions"`
+	} `json:"components"`
+	Created time.Time `json:"created"`
+	Cves    []struct {
+		CvssV2 string `json:"cvss_v2"`
+	} `json:"cves"`
+	Description string `json:"description"`
+	IssueType   string `json:"issue_type"`
+	Provider    string `json:"provider"`
+	Severity    string `json:"severity"`
+	Summary     string `json:"summary"`
+}
 type ComponentSummaryResult struct {
 	Artifacts []ComponentArtifact `json:"artifacts"`
 }
