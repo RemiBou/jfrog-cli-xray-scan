@@ -22,7 +22,7 @@ There is 2 way for using xray scan :
 * Standard input : you redirect the output of "mvnw dependency:list" or "go list -m" to the scan like this
 ```bash
 mvn dependency:list | jfrog xray scan
-go list -m | jfrog xray scan
+go list -m all | jfrog xray scan
 ```
 This will display a summary of the vulnerabilities (high/medium/low) and license for all the dependencies found.
 
