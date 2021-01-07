@@ -10,16 +10,15 @@ Since this plugin is currently not included in [JFrog CLI Plugins Registry](http
 2. Create a directory named ```plugins``` under ```~/.jfrog/``` if it does not exist already.
 3. Clone this repository.
 4. CD into the root directory of the cloned project.
-5. Run ```go build``` to create the binary in the current directory.
-6. Copy the binary into the ```~/.jfrog/plugins``` directory.
+5. Run ```make build-install``` to create the binary in the current directory.
 
 ## Usage
 ### Commands
 There is 2 way for using xray scan :
 * Standard input : you redirect the output of "mvnw dependency:list" or "go list -m" to the scan like this
 ```bash
-mvn dependency:list | jfrog xray scan
-go list -m all | jfrog xray scan
+mvn dependency:list | jfrog xray-scan scan
+go list -m all | jfrog xray-scan scan
 ```
 This will display a summary of the vulnerabilities (high/medium/low) and license for all the dependencies found.
 

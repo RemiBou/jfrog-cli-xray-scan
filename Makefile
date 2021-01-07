@@ -4,6 +4,9 @@ GOARCH = amd64
 build: clean
 	go build -o "xray-scan-${GOOS}-${GOARCH}"
 
+build-install:: build
+	mv xray-scan-${GOOS}-${GOARCH} ~/.jfrog/plugins/xray-scan
+
 clean:
 	rm -f xray-scan-${GOOS}-${GOARCH}
 
