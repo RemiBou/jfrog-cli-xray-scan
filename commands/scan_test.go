@@ -66,6 +66,21 @@ func Test_Scan_UseBuffer_Remains(t *testing.T) {
 	require.Equal(t, 101, len(fakeXrayClient.scanned))
 }
 
+func Test_Scan_IgnoreDuplicates(t *testing.T) {
+	context := &fakeContext{flags: map[string]interface{}{}}
+	var input string
+	input += "[INFO]    org.slf4j:slf4j-ext:jar:1.7.0:compile -- module slf4j.ext (auto)\n"
+	input += "[INFO]    org.slf4j:slf4j-ext:jar:1.7.0:compile -- module slf4j.ext (auto)\n"
+	stdin := bytes.NewBufferString(input)
+	fakeXrayClient := &fakeXrayClient{
+		resultOK: &ComponentSummaryResult{},
+	}
+	err := scanCmd(context, stdin, fakeXrayClient.scan)
+	require.NoError(t, err)
+	require.Equal(t, 1, fakeXrayClient.scanCount)
+	require.Equal(t, 1, len(fakeXrayClient.scanned))
+}
+
 func Test_Scan_ReturnErrorIfVuln(t *testing.T) {
 	context := &fakeContext{flags: map[string]interface{}{failKey: true}}
 	var input string

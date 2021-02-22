@@ -115,11 +115,15 @@ func scan(lines <-chan string, scanner xrayScanner, conf scanConfiguration) erro
 	var result error
 	var any bool
 	buffer := make([]component, 0, scanBufferSize)
+	alreadyDones := make(map[component]bool)
 	for line := range lines {
 		comp, ok := parse(line)
 		if ok {
 			log.Debug("Detected component ", comp)
-			buffer = append(buffer, comp)
+			if _, alreadyDone := alreadyDones[comp]; !alreadyDone {
+				buffer = append(buffer, comp)
+				alreadyDones[comp] = true
+			}
 		}
 		if len(buffer) == scanBufferSize {
 			log.Debug("Component buffer is full")
